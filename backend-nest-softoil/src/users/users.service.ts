@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, ForbiddenException, ConflictException } from '@nestjs/common';
+import { Injectable, BadRequestException, ForbiddenException, ConflictException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
@@ -80,11 +80,23 @@ export class UsersService {
   }
 
   async remove(id: any) {
-    const user = await this.prisma.user.delete({
-      where: { id },
-    });
+    // const user = await this.prisma.user.delete({
+    //   where: { id },
+    // });
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
 
+    await this.prisma.user.delete({ where: { id } });
+    
     await this.logService.createLog(id, 'User deleted');
+
+    return {
+      status: "Success",
+      response: "User deleted successfully",
+    };
+
 
     return user;
   }
